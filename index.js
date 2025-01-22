@@ -40,14 +40,14 @@ async function run() {
     const booksCollection = client.db('BookInventory').collection('books');
 
     // Insert a book to the db: POST method
-    app.post('/upload-book', async (req, res) => {
+    app.post('/api/upload-book', async (req, res) => {
       const data = req.body;
       const result = await booksCollection.insertOne(data);
       res.send(result);
     });
 
     // Get all books or filter by category
-    app.get('/all-books', async (req, res) => {
+    app.get('/api/all-books', async (req, res) => {
       try {
         let query = {};
         if (req.query?.category) {
@@ -62,7 +62,7 @@ async function run() {
     });
 
     // Update a book using PATCH or POST update method
-    app.patch('/book/:id', async (req, res) => {
+    app.patch('/api/book/:id', async (req, res) => {
       const id = req.params.id;
       const updateBookData = req.body;
       const filter = { _id: new ObjectId(id) };
@@ -79,7 +79,7 @@ async function run() {
     });
 
     // Delete a book using DELETE method
-    app.delete('/book/:id', async (req, res) => {
+    app.delete('/api/book/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const result = await booksCollection.deleteOne(filter);
@@ -87,7 +87,7 @@ async function run() {
     });
 
     // Get a single book's data
-    app.get('/book/:id', async (req, res) => {
+    app.get('/api/book/:id', async (req, res) => {
       try {
         const id = req.params.id;
         const filter = { _id: new ObjectId(id) };

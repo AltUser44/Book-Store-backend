@@ -31,6 +31,11 @@ const client = new MongoClient(uri, {
   },
 });
 
+// Add a ping route to keep the server alive
+app.get('/api/ping', (req, res) => {
+  res.send({ message: 'Server is alive!' });
+});
+
 async function run() {
   try {
     // Connect the client to the server (optional starting in v4.7)

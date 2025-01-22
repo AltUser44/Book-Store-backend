@@ -1,22 +1,24 @@
-const express = require('express')
-const app = express()
+const express = require('express');
+const app = express();
 const port = process.env.PORT || 2000;
-const cors = require('cors')
+const cors = require('cors');
 
-//middleware
-app.use(cors());
+// CORS Configuration
+const corsOptions = {
+  origin: 'https://book-store-frontend-teal-iota.vercel.app',
+  methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+  credentials: true,
+};
+app.use(cors(corsOptions));
+
+// Middleware
 app.use(express.json());
 
-//QkNapCB7x21Ak2oU
-
 app.get('/', (req, res) => {
-  res.send('Hello World!')
-})
+  res.send('Hello World!');
+});
 
-
-// mongodb  configuration
-
-
+// MongoDB Configuration
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = process.env.MONGO_URI;
 
@@ -26,83 +28,77 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
+    // Connect the client to the server (optional starting in v4.7)
     await client.connect();
 
-    // create a collection of documents
-    const booksCollection = client.db("BookInventory").collection("books");
+    // Create a collection of documents
+    const booksCollection = client.db('BookInventory').collection('books');
 
-    // insert a book to the db: post method 
+    // Insert a book to the db: POST method
+    app.post('/upload-book', async (req, res) => {
+      const data = req.body;
+      const result = await booksCollection.insertOne(data);
+      res.send(result);
+    });
 
-    app.post("/upload-book", async(req, res) => {
-        const data = req.body;
-        const result = await booksCollection.insertOne(data);
-        res.send(result);
-    })
+    // Get all books from the database
+    app.get('/all-books', async (req, res) => {
+      const books = booksCollection.find();
+      const result = await books.toArray();
+      res.send(result);
+    });
 
-    // get all books from database
-    app.get("/all-books", async(req, res) => {
-        const books = booksCollection.find();
-        const result = await books.toArray();
-        res.send(result);
-    })
+    // Update a book using PATCH or POST update method
+    app.patch('/book/:id', async (req, res) => {
+      const id = req.params.id;
+      const updateBookData = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
 
-    // update a book using patch or post update method
-    app.patch("/book/:id", async(req, res) => {
-        const id = req.params.id;
-        //console.log(id);
-        const updateBookData = req.body;
-        const filter = {_id: new ObjectId(id)};
-        const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          ...updateBookData,
+        },
+      };
 
-        const updateDoc = {
-            $set: {
-                ...updateBookData
-            }
-        }
+      const result = await booksCollection.updateOne(filter, updateDoc, options);
+      res.send(result);
+    });
 
-        //update
-        const result = await booksCollection.updateOne(filter, updateDoc, options);
-        res.send(result);
+    // Delete a book using DELETE method
+    app.delete('/book/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await booksCollection.deleteOne(filter);
+      res.send(result);
+    });
 
-    })
+    // Find books by category
+    app.get('/all-books', async (req, res) => {
+      let query = {};
+      if (req.query?.category) {
+        query = { category: req.query.category };
+      }
+      const result = await booksCollection.find(query).toArray();
+      res.send(result);
+    });
 
-    // delete a book using delete method
-    app.delete("/book/:id", async(req, res) => {
-        const id = req.params.id;
-        const filter = { _id: new ObjectId(id) };
-        const result = await booksCollection.deleteOne(filter);
-        res.send(result);
-    })
-
-    // find by category
-    app.get("/all-books", async(req, res) => {
-        let query = {};
-        if(req.query?.category){
-            query = {category: req.query.category};
-        }
-        const result = await booksCollection.find(query).toArray();
-        res.send(result);
-    })
-
-    // to get a single book data
-    app.get("/book/:id", async(req, res) => {
+    // Get a single book's data
+    app.get('/book/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const result = await booksCollection.findOne(filter);
       res.send(result);
-    })
-
-
+    });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    await client.db('admin').command({ ping: 1 });
+    console.log('Pinged your deployment. You successfully connected to MongoDB!');
   } finally {
     // Ensures that the client will close when you finish/error
     //await client.close();
@@ -110,8 +106,6 @@ async function run() {
 }
 run().catch(console.dir);
 
-
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
-      
+  console.log(`Example app listening on port ${port}`);
+});

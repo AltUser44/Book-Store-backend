@@ -36,6 +36,17 @@ app.get('/api/ping', (req, res) => {
   res.send({ message: 'Server is alive!' });
 });
 
+app.use((req, res, next) => {
+  console.log(`Request: ${req.method} ${req.url} - ${new Date().toISOString()}`);
+  next();
+});
+
+
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
+
 async function run() {
   try {
     // Connect the client to the server (optional starting in v4.7)

@@ -46,11 +46,19 @@ async function run() {
       res.send(result);
     });
 
-    // Get all books from the database
+    // Get all books or filter by category
     app.get('/all-books', async (req, res) => {
-      const books = booksCollection.find();
-      const result = await books.toArray();
-      res.send(result);
+      try {
+        let query = {};
+        if (req.query?.category) {
+          query = { category: req.query.category };
+        }
+        const books = booksCollection.find(query);
+        const result = await books.toArray();
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ error: 'Failed to fetch books' });
+      }
     });
 
     // Update a book using PATCH or POST update method
@@ -78,22 +86,16 @@ async function run() {
       res.send(result);
     });
 
-    // Find books by category
-    app.get('/all-books', async (req, res) => {
-      let query = {};
-      if (req.query?.category) {
-        query = { category: req.query.category };
-      }
-      const result = await booksCollection.find(query).toArray();
-      res.send(result);
-    });
-
     // Get a single book's data
     app.get('/book/:id', async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await booksCollection.findOne(filter);
-      res.send(result);
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const result = await booksCollection.findOne(filter);
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ error: 'Failed to fetch book details' });
+      }
     });
 
     // Send a ping to confirm a successful connection
